@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parasite Classifier - Mobile Field Workflow</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-slate-900 text-slate-800 font-sans flex justify-center items-center min-h-screen">
+
+    <!-- Mobile Device Frame Wrapper -->
+    <div
+        class="w-full max-w-sm bg-white min-h-[750px] shadow-2xl rounded-[40px] overflow-hidden flex flex-col justify-between border-[10px] border-slate-800 relative">
+
+        <!-- Top App Bar -->
+        <header class="bg-emerald-700 text-white px-5 py-4 flex items-center justify-between shadow-md">
+            <button onclick="resetApp()" class="text-xl font-bold focus:outline-none">&#9776;</button>
+            <h1 class="font-bold text-lg tracking-wide">Parasite Classifier</h1>
+            <div class="w-6"></div>
+        </header>
+
+        <!-- Dynamic Screen Area -->
+        <main class="flex-1 p-5 flex flex-col justify-between overflow-y-auto bg-slate-50/50">
+
+            <!-- SCREEN 1: NEW SESSION -->
+            <div id="screen-session" class="space-y-6 flex flex-col justify-center my-auto">
+                <div class="text-center space-y-1">
+                    <h2 class="text-2xl font-black text-slate-900 tracking-tight">Configure New</h2>
+                    <h2 class="text-2xl font-black text-emerald-700 tracking-tight">Analysis Session</h2>
+                    <p class="text-xs text-slate-500 pt-1">Enter sample details below to start classifying parasites.
+                    </p>
+                </div>
+
+                <div class="space-y-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1 tracking-wider">Sample
+                            ID:</label>
+                        <input type="text" id="sampleId" value="#84920"
+                            class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-slate-800 font-medium text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1 tracking-wider">Sample
+                            Type:</label>
+                        <input type="text" id="sampleType" value="Anonymous"
+                            class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-slate-800 font-medium text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+                    </div>
+                </div>
+
+                <input type="file" id="imageInput" accept="image/*" class="hidden"
+                    onchange="handleImageSelected(event)">
+
+                <button onclick="document.getElementById('imageInput').click()"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition duration-200 uppercase text-sm tracking-wider flex items-center justify-center space-x-2">
+                    <span>📷</span>
+                    <span>START NEW SCAN</span>
+                </button>
+            </div>
+
+            <!-- SCREEN 2: SCAN IN PROGRESS -->
+            <div id="screen-scan"
+                class="hidden flex-1 flex flex-col justify-between relative bg-slate-950 rounded-3xl p-4 my-2 text-white shadow-inner overflow-hidden">
+                <div
+                    class="flex items-center justify-between bg-slate-900/90 border border-slate-800 px-4 py-2.5 rounded-full backdrop-blur">
+                    <button onclick="switchScreen('screen-session')"
+                        class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
+                    <span class="text-xs uppercase tracking-widest font-bold text-emerald-400">Scan in Progress</span>
+                    <span class="text-slate-400">⚙️</span>
+                </div>
+
+                <div
+                    class="relative w-64 h-64 border-2 border-dashed border-emerald-400 rounded-full flex items-center justify-center overflow-hidden mx-auto my-auto shadow-2xl bg-slate-900">
+                    <img id="scanPreviewImg" class="absolute inset-0 w-full h-full object-cover opacity-75"
+                        alt="Scanning">
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div class="w-full h-[1px] bg-emerald-500/30"></div>
+                        <div class="absolute h-full w-[1px] bg-emerald-500/30"></div>
+                        <div
+                            class="w-10 h-10 border border-emerald-400/50 rounded-full flex items-center justify-center">
+                            <div class="w-1 h-1 bg-emerald-400 rounded-full"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex items-center justify-center space-x-2 text-center">
+                        <div class="w-4 h-4 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin">
+                        </div>
+                        <span class="font-bold text-sm text-emerald-400">Analyzing...</span>
+                    </div>
+
+                    <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 space-y-1.5">
+                        <span class="text-xs text-slate-300 font-medium">Model processing...</span>
+                        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                            <div class="bg-emerald-500 h-full rounded-full animate-pulse w-3/4"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCREEN 3: POST-ANALYSIS REVIEW -->
+            <div id="screen-results" class="hidden space-y-4 my-auto">
+                <div id="statusBanner"
+                    class="bg-emerald-600 text-white p-4 rounded-xl shadow-md flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-lg font-bold">✓
+                    </div>
+                    <div>
+                        <h3 id="bannerTitle" class="font-black tracking-wide text-base">ANALYSIS COMPLETE</h3>
+                        <p class="text-[11px] text-emerald-100">YOLOv8 inference finished successfully</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="text-center space-y-1">
+                        <span class="text-[10px] uppercase font-bold text-slate-500">Raw Sample</span>
+                        <div class="bg-slate-100 h-28 rounded-lg overflow-hidden border">
+                            <img id="rawResultImg" class="w-full h-full object-cover" alt="Raw Sample">
+                        </div>
+                    </div>
+                    <div class="text-center space-y-1">
+                        <span class="text-[10px] uppercase font-bold text-slate-500">Detected Parasites</span>
+                        <div class="bg-slate-100 h-28 rounded-lg overflow-hidden border relative">
+                            <img id="annotatedResultImg" class="w-full h-full object-cover" alt="Detected">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="detectionSummary"
+                    class="bg-white border rounded-xl p-3 text-xs space-y-1.5 max-h-24 overflow-y-auto"></div>
+
+                <div class="space-y-2 pt-1">
+                    <button onclick="generateReport()"
+                        class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow transition text-xs tracking-wider uppercase">
+                        GENERATE REPORT
+                    </button>
+                    <button onclick="resetApp()"
+                        class="w-full bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold py-3.5 rounded-xl shadow-sm transition text-xs tracking-wider uppercase">
+                        RUN NEW SCAN
+                    </button>
+                </div>
+            </div>
+
+        </main>
+
+        <footer class="text-center text-[10px] text-slate-400 py-2 border-t bg-slate-50">
+            Field Diagnostic Module v1.0 • YOLOv8
+        </footer>
+    </div>
+
+    <!-- Application Script Logic -->
+    <script>
+        // Dynamic endpoint selection: local backend during local dev, live production URL when deployed
+        const BACKEND_URL = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost")
+            ? "http://127.0.0.1:8000/predict"
+            : "https://parasite-classifier.onrender.com/predict";
+
+        function switchScreen(screenId) {
+            document.getElementById('screen-session').classList.add('hidden');
+            document.getElementById('screen-scan').classList.add('hidden');
+            document.getElementById('screen-results').classList.add('hidden');
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function resetApp() {
+            document.getElementById('imageInput').value = '';
+            switchScreen('screen-session');
+        }
+
+        function handleImageSelected(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('scanPreviewImg').src = e.target.result;
+                document.getElementById('rawResultImg').src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+
+            switchScreen('screen-scan');
+            uploadAndPredict(file);
+        }
+
+        async function uploadAndPredict(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(BACKEND_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('annotatedResultImg').src = data.annotated_image;
+
+                    const summaryEl = document.getElementById('detectionSummary');
+                    summaryEl.innerHTML = '';
+
+                    if (data.detections.length === 0) {
+                        document.getElementById('bannerTitle').innerText = "NO PARASITES DETECTED";
+                        summaryEl.innerHTML = '<p class="text-slate-500 italic text-center py-2">Sample is clear of targeted classes.</p>';
+                    } else {
+                        document.getElementById('bannerTitle').innerText = `${data.detections.length} PARASITE(S) DETECTED`;
+                        data.detections.forEach(det => {
+                            const confidencePercent = (det.confidence * 100).toFixed(1);
+                            summaryEl.innerHTML += `
+                                <div class="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-100">
+                                    <span class="font-bold text-slate-700">${det.class}</span>
+                                    <span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[11px]">${confidencePercent}%</span>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    setTimeout(() => {
+                        switchScreen('screen-results');
+                    }, 600);
+
+                } else {
+                    alert('Server Error: ' + (data.error || 'Unknown classification failure.'));
+                    switchScreen('screen-session');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Connection Failed: Could not reach backend server. If running on Render, please allow ~50s for free instance cold-starts.');
+                switchScreen('screen-session');
+            }
+        }
+
+        function generateReport() {
+            const sampleId = document.getElementById('sampleId').value;
+            const sampleType = document.getElementById('sampleType').value;
+            const statusText = document.getElementById('bannerTitle').innerText;
+            const summaryContainer = document.getElementById('detectionSummary');
+
+            let reportContent = `========================================\n`;
+            reportContent += `     PARASITE DIAGNOSTIC REPORT\n`;
+            reportContent += `========================================\n`;
+            reportContent += `Date / Time : ${new Date().toLocaleString()}\n`;
+            reportContent += `Sample ID   : ${sampleId}\n`;
+            reportContent += `Sample Type : ${sampleType}\n`;
+            reportContent += `Status      : ${statusText}\n`;
+            reportContent += `----------------------------------------\n`;
+            reportContent += `Detections Found:\n`;
+
+            const detectionRows = summaryContainer.querySelectorAll('div');
+            if (detectionRows.length === 0) {
+                reportContent += `- No target parasites detected.\n`;
+            } else {
+                detectionRows.forEach(row => {
+                    reportContent += `- ${row.innerText}\n`;
+                });
+            }
+            reportContent += `========================================\n`;
+            reportContent += `Generated by Field Diagnostic Module v1.0 • YOLOv8\n`;
+
+            const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+
+            link.href = url;
+            link.download = `Diagnostic_Report_${sampleId.replace('#', '')}.txt`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+
+</html>

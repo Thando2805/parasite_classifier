@@ -13,18 +13,27 @@ model = None
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "best.pt")
 
-POSSIBLE_INDEX_PATHS = [
-    os.path.join(BASE_DIR, "..", "..", "frontend", "index.html"),
-    os.path.join(BASE_DIR, "..", "frontend", "index.html"),
-    os.path.join(BASE_DIR, "frontend", "index.html"),
-    os.path.join(BASE_DIR, "index.html"),
-]
-
 def find_index_file():
-    for path in POSSIBLE_INDEX_PATHS:
-        abs_path = os.path.abspath(path)
-        if os.path.exists(abs_path):
-            return abs_path
+    # 1. Direct path checks
+    check_paths = [
+        os.path.join(BASE_DIR, "index.html"),
+        os.path.join(BASE_DIR, "frontend", "index.html"),
+        os.path.join(BASE_DIR, "..", "frontend", "index.html"),
+        os.path.join(BASE_DIR, "..", "..", "frontend", "index.html"),
+        os.path.join(os.getcwd(), "index.html"),
+        os.path.join(os.getcwd(), "frontend", "index.html"),
+    ]
+    for path in check_paths:
+        abs_p = os.path.abspath(path)
+        if os.path.exists(abs_p):
+            return abs_p
+
+    # 2. Dynamic directory search across container working directory
+    search_root = os.path.abspath(os.path.join(BASE_DIR, "..", ".."))
+    for root, dirs, files in os.walk(search_root):
+        if "index.html" in files:
+            return os.path.join(root, "index.html")
+            
     return None
 
 @asynccontextmanager
@@ -48,7 +57,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serves index.html directly on the root URL
 @app.get("/")
 def read_root():
     index_file = find_index_file()
