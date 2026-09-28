@@ -19,4 +19,4 @@ COPY . .
 EXPOSE 10000
 
 # Run FastAPI using uvicorn binding to Render's PORT environment variable
-CMD ["sh", "-c", "uvicorn ${MODULE_PATH:-main:app} --host 0.0.0.0 --port ${PORT:-10000}"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "10000"]
