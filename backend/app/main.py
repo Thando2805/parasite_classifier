@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-# Allow frontend requests from any origin (Crucial for local browser testing)
+# Allow frontend requests from any origin
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -34,6 +34,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Root endpoint (fixes 404 on base URL)
+@app.get("/")
+def read_root():
+    return {"status": "online", "message": "Parasite Classifier API is running!"}
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
