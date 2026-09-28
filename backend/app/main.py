@@ -1,5 +1,6 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 import cv2
 import base64
 import numpy as np
@@ -9,9 +10,23 @@ from contextlib import asynccontextmanager
 
 model = None
 
-# Automatically find 'best.pt' in the exact same folder as this main.py file
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "best.pt")
+
+# Flexible search paths for index.html depending on repo structure
+POSSIBLE_INDEX_PATHS = [
+    os.path.join(BASE_DIR, "..", "..", "frontend", "index.html"),
+    os.path.join(BASE_DIR, "..", "frontend", "index.html"),
+    os.path.join(BASE_DIR, "frontend", "index.html"),
+    os.path.join(BASE_DIR, "index.html"),
+]
+
+def find_index_file():
+    for path in POSSIBLE_INDEX_PATHS:
+        abs_path = os.path.abspath(path)
+        if os.path.exists(abs_path):
+            return abs_path
+    return None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -21,12 +36,11 @@ async def lifespan(app: FastAPI):
         model = YOLO(MODEL_PATH)
         print("Model loaded successfully!")
     else:
-        print(f"WARNING: '{MODEL_PATH}' not found at {MODEL_PATH}!")
+        print(f"WARNING: '{MODEL_PATH}' not found!")
     yield
 
 app = FastAPI(lifespan=lifespan)
 
-# Allow frontend requests from any origin
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -35,9 +49,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Root endpoint (fixes 404 on base URL)
+# Serve the mobile web UI directly on the root URL
 @app.get("/")
 def read_root():
+    index_file = find_index_file()
+    if index_file:
+        return FileResponse(index_file)
     return {"status": "online", "message": "Parasite Classifier API is running!"}
 
 @app.post("/predict")
@@ -78,6 +95,5 @@ async def predict(file: UploadFile = File(...)):
 
 if __name__ == "__main__":
     import uvicorn
-    # Dynamically bind to assigned PORT (Render / Cloud) or fallback to 8000
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)

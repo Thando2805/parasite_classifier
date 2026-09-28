@@ -15,7 +15,7 @@
     <div
         class="w-full max-w-sm bg-white min-h-[750px] shadow-2xl rounded-[40px] overflow-hidden flex flex-col justify-between border-[10px] border-slate-800 relative">
 
-        <!-- Top App Bar (Classic Green Theme) -->
+        <!-- Top App Bar -->
         <header class="bg-emerald-700 text-white px-5 py-4 flex items-center justify-between shadow-md">
             <button onclick="resetApp()" class="text-xl font-bold focus:outline-none">&#9776;</button>
             <h1 class="font-bold text-lg tracking-wide">Parasite Classifier</h1>
@@ -25,7 +25,7 @@
         <!-- Dynamic Screen Area -->
         <main class="flex-1 p-5 flex flex-col justify-between overflow-y-auto bg-slate-50/50">
 
-            <!-- ================= SCREEN 1: NEW SESSION ================= -->
+            <!-- SCREEN 1: NEW SESSION -->
             <div id="screen-session" class="space-y-6 flex flex-col justify-center my-auto">
                 <div class="text-center space-y-1">
                     <h2 class="text-2xl font-black text-slate-900 tracking-tight">Configure New</h2>
@@ -60,7 +60,7 @@
                 </button>
             </div>
 
-            <!-- ================= SCREEN 2: SCAN IN PROGRESS ================= -->
+            <!-- SCREEN 2: SCAN IN PROGRESS -->
             <div id="screen-scan"
                 class="hidden flex-1 flex flex-col justify-between relative bg-slate-950 rounded-3xl p-4 my-2 text-white shadow-inner overflow-hidden">
                 <div
@@ -71,7 +71,6 @@
                     <span class="text-slate-400">⚙️</span>
                 </div>
 
-                <!-- Circular Microscope Viewport with Crosshairs -->
                 <div
                     class="relative w-64 h-64 border-2 border-dashed border-emerald-400 rounded-full flex items-center justify-center overflow-hidden mx-auto my-auto shadow-2xl bg-slate-900">
                     <img id="scanPreviewImg" class="absolute inset-0 w-full h-full object-cover opacity-75"
@@ -102,7 +101,7 @@
                 </div>
             </div>
 
-            <!-- ================= SCREEN 3: POST-ANALYSIS REVIEW ================= -->
+            <!-- SCREEN 3: POST-ANALYSIS REVIEW -->
             <div id="screen-results" class="hidden space-y-4 my-auto">
                 <div id="statusBanner"
                     class="bg-emerald-600 text-white p-4 rounded-xl shadow-md flex items-center space-x-3">
@@ -130,9 +129,7 @@
                 </div>
 
                 <div id="detectionSummary"
-                    class="bg-white border rounded-xl p-3 text-xs space-y-1.5 max-h-24 overflow-y-auto">
-                    <!-- Dynamic detections list inserted here -->
-                </div>
+                    class="bg-white border rounded-xl p-3 text-xs space-y-1.5 max-h-24 overflow-y-auto"></div>
 
                 <div class="space-y-2 pt-1">
                     <button onclick="generateReport()"
@@ -155,8 +152,10 @@
 
     <!-- Application Script Logic -->
     <script>
-        // Local Backend Endpoint URL
-        const BACKEND_URL = "http://127.0.0.1:8000/predict";
+        // Dynamic endpoint selection: local backend during local dev, live production URL when deployed
+        const BACKEND_URL = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost")
+            ? "http://127.0.0.1:8000/predict"
+            : "https://parasite-classifier.onrender.com/predict";
 
         function switchScreen(screenId) {
             document.getElementById('screen-session').classList.add('hidden');
@@ -174,7 +173,6 @@
             const file = event.target.files[0];
             if (!file) return;
 
-            // Render local preview on scanning screen & results screen
             const reader = new FileReader();
             reader.onload = (e) => {
                 document.getElementById('scanPreviewImg').src = e.target.result;
@@ -182,7 +180,6 @@
             };
             reader.readAsDataURL(file);
 
-            // Switch to scan screen and trigger backend request
             switchScreen('screen-scan');
             uploadAndPredict(file);
         }
@@ -200,7 +197,6 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    // Populate annotated image from backend base64 response
                     document.getElementById('annotatedResultImg').src = data.annotated_image;
 
                     const summaryEl = document.getElementById('detectionSummary');
@@ -222,7 +218,6 @@
                         });
                     }
 
-                    // Transition to results screen smoothly
                     setTimeout(() => {
                         switchScreen('screen-results');
                     }, 600);
@@ -233,18 +228,15 @@
                 }
             } catch (err) {
                 console.error(err);
-                alert('Connection Failed: Could not reach the local backend server. Make sure uvicorn is running.');
+                alert('Connection Failed: Could not reach backend server. If running on Render, please allow ~50s for free instance cold-starts.');
                 switchScreen('screen-session');
             }
         }
 
-        // Properly scoped Report Generator function
         function generateReport() {
             const sampleId = document.getElementById('sampleId').value;
             const sampleType = document.getElementById('sampleType').value;
             const statusText = document.getElementById('bannerTitle').innerText;
-
-            // Grab the detection summary elements
             const summaryContainer = document.getElementById('detectionSummary');
 
             let reportContent = `========================================\n`;
@@ -257,7 +249,6 @@
             reportContent += `----------------------------------------\n`;
             reportContent += `Detections Found:\n`;
 
-            // Check if there are detections listed
             const detectionRows = summaryContainer.querySelectorAll('div');
             if (detectionRows.length === 0) {
                 reportContent += `- No target parasites detected.\n`;
@@ -269,7 +260,6 @@
             reportContent += `========================================\n`;
             reportContent += `Generated by Field Diagnostic Module v1.0 • YOLOv8\n`;
 
-            // Create a downloadable text file blob
             const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
