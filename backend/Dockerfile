@@ -12,11 +12,11 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all backend files (main.py and best.pt) into the container
+# Copy backend files into the container
 COPY . .
 
-# Hugging Face requires port 7860
-EXPOSE 7860
+# Render defaults to port 10000
+EXPOSE 10000
 
-# Run FastAPI using uvicorn on port 7860
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]
+# Run FastAPI using uvicorn binding to Render's PORT environment variable
+CMD ["sh", "-c", "uvicorn ${MODULE_PATH:-main:app} --host 0.0.0.0 --port ${PORT:-10000}"]
