@@ -1,0 +1,6 @@
+.env
+runs/
+dataset_pipeline/
+.Rhistory
+__pycache__/
+.vscode/
