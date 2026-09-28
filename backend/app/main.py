@@ -21,7 +21,7 @@ async def lifespan(app: FastAPI):
         model = YOLO(MODEL_PATH)
         print("Model loaded successfully!")
     else:
-        print(f"WARNING: '{MODEL_PATH}' not found!")
+        print(f"WARNING: '{MODEL_PATH}' not found at {MODEL_PATH}!")
     yield
 
 app = FastAPI(lifespan=lifespan)
@@ -78,4 +78,6 @@ async def predict(file: UploadFile = File(...)):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)
+    # Dynamically bind to assigned PORT (Render / Cloud) or fallback to 8000
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
