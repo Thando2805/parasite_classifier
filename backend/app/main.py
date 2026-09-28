@@ -1,19 +1,18 @@
+import os
+import base64
+import cv2
+import numpy as np
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-import cv2
-import base64
-import numpy as np
 from ultralytics import YOLO
-import os
-from contextlib import asynccontextmanager
 
 model = None
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "best.pt")
 
-# Flexible search paths for index.html depending on repo structure
 POSSIBLE_INDEX_PATHS = [
     os.path.join(BASE_DIR, "..", "..", "frontend", "index.html"),
     os.path.join(BASE_DIR, "..", "frontend", "index.html"),
@@ -49,7 +48,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve the mobile web UI directly on the root URL
+# Serves index.html directly on the root URL
 @app.get("/")
 def read_root():
     index_file = find_index_file()
@@ -75,7 +74,7 @@ async def predict(file: UploadFile = File(...)):
 
     results = model(img)
     plotted_img = results[0].plot()
-    
+
     _, buffer = cv2.imencode('.jpg', plotted_img)
     annotated_base64 = base64.b64encode(buffer).decode('utf-8')
     annotated_data_url = f"data:image/jpeg;base64,{annotated_base64}"
